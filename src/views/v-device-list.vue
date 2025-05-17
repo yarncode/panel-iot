@@ -1,15 +1,15 @@
 <template>
   <div class="device-list-container p-6">
-    <h1 class="text-2xl font-bold mb-4">Device List</h1>
+    <h1 class="text-2xl font-bold mb-4">Danh sách thiết bị</h1>
 
-    <div class="mb-4 flex justify-between items-center">
+    <div class="mb-4 flex items-center">
       <div class="search-box">
-        <el-input v-model="searchQuery" placeholder="Search devices..." prefix-icon="Search" clearable
+        <el-input v-model="searchQuery" placeholder="Tìm thiết bị..." prefix-icon="Search" clearable
           @input="handleSearch" />
       </div>
-      <div class="pagination-selector">
-        <span class="mr-2">Records per page:</span>
-        <el-select v-model="pageSize" @change="handleSizeChange">
+      <div class="pagination-selector flex items-center mx-2">
+        <p class="">Số bản ghi</p>
+        <el-select class="ml-2" style="width: 80px;" v-model="pageSize" @change="handleSizeChange">
           <el-option :value="5" label="5" />
           <el-option :value="10" label="10" />
           <el-option :value="20" label="20" />
@@ -17,14 +17,18 @@
       </div>
     </div>
 
-    <el-table :data="paginatedDevices" stripe border style="width: 100%" v-loading="loading">
+    <el-table :data="paginatedDevices" stripe v-loading="loading" :flexible="true"
+      @selection-change="handleSelectionChange" :row-key="row => row.id" show-select>
+
+      <el-table-column type="selection" width="55" />
+
       <el-table-column label="STT" width="70">
         <template #default="{ $index }">
           {{ ($index + 1) + (currentPage - 1) * pageSize }}
         </template>
       </el-table-column>
 
-      <el-table-column prop="name" label="Name" width="200">
+      <el-table-column prop="name" label="Tên" width="200">
         <template #default="{ row }">
           <div class="flex items-center gap-2">
             <el-input v-if="editingRow === row" v-model="row.name" size="small" />
@@ -44,9 +48,9 @@
       </el-table-column>
 
       <el-table-column prop="id" label="ID" width="120" />
-      <el-table-column prop="mac" label="MAC Address" width="180" />
+      <el-table-column prop="mac" label="Địa chỉ MAC" width="180" />
 
-      <el-table-column label="Device Type">
+      <el-table-column label="Loại">
         <template #header>
           <div class="flex items-center gap-2 whitespace-nowrap overflow-hidden">
             Device Type
@@ -61,7 +65,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Status">
+      <el-table-column label="Trạng thái">
         <template #header>
           <div class="flex items-center gap-2 whitespace-nowrap overflow-hidden">
             Status
@@ -80,13 +84,16 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="firmwareVersion" label="Firmware Version" width="160" />
-      <el-table-column prop="operateTime" label="Operate Time" width="160" />
+      <el-table-column prop="firmwareVersion" label="Phiên bản" width="160" />
+      <el-table-column prop="operateTime" label="Thời gian hoạt động" width="160" />
 
-      <el-table-column label="Actions">
+      <el-table-column label="Hành động" width="220">
         <template #default="{ row }">
-          <el-button size="small" type="primary" @click="viewDevice(row)">View</el-button>
-          <el-button size="small" type="warning" @click="editDevice(row)">Edit</el-button>
+          <div class="flex">
+            <el-button size="small" type="primary" @click="viewDevice(row)">View</el-button>
+            <el-button size="small" type="warning" @click="editDevice(row)">Edit</el-button>
+            <el-button size="small" type="danger" @click="removeDevice(row)">Remove</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -135,6 +142,7 @@ const pageSize = ref(10);
 const statusFilter = ref('');
 const deviceTypeFilter = ref('');
 const editingRow = ref<Device | null>(null);
+const selectedRows = ref<Device[]>([]);
 
 onMounted(() => {
   // Simulate API loading
@@ -219,6 +227,17 @@ const viewDevice = (device: Device) => {
 const editDevice = (device: Device) => {
   console.log('Edit device', device);
   // Implement edit functionality
+};
+
+const removeDevice = (device: Device) => {
+  console.log('Remove device', device);
+  // Implement edit functionality
+};
+
+const handleSelectionChange = (selection: Device[]) => {
+  selectedRows.value = selection;
+  console.log('Selected rows:', selectedRows.value);
+  // Trigger any additional callback logic here
 };
 
 const deviceTypes = computed(() => {

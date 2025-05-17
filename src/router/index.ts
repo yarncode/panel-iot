@@ -7,6 +7,7 @@ import VSignup from '@/views/v-signup.vue';
 import VSystemLogger from '@/views/v-system-logger.vue';
 import VFileOTA from '@/views/v-file-ota.vue';
 import VUserProfile from '@/views/v-user-profile.vue';
+import VDeviceType from '@/views/v-device-type.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -42,6 +43,11 @@ const router = createRouter({
           path: 'profile',
           name: 'profile',
           component: VUserProfile,
+        },
+        {
+          path: 'device-type',
+          name: 'device-type',
+          component: VDeviceType,
         },
       ],
     },
