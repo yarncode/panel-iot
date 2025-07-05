@@ -74,6 +74,16 @@ const sideMenuItems = ref([
     icon: 'fi fi-rr-chart-histogram'
   },
   {
+    title: 'Giao diện Scada',
+    route: '/scada',
+    icon: 'fi fi-rr-chart-tree'
+  },
+  {
+    title: 'Giao diện DMA Tree',
+    route: '/tree-dma',
+    icon: 'fi fi-rr-chart-tree'
+  },
+  {
     title: 'File OTA',
     route: '/ota',
     icon: 'fi fi-rr-file-code'

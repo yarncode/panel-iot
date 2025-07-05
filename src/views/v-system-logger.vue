@@ -2,7 +2,7 @@
   <section class="system-logger-container p-6">
     <header class="mb-4">
       <h1 class="text-2xl font-bold">Hệ thống nhật ký</h1>
-      <p class="text-sm text-gray-500">Các message sẽ ghi nhận theo thời gian thực.</p>
+      <!-- <p class="text-sm text-gray-500">Các message sẽ ghi nhận theo thời gian thực.</p> -->
     </header>
 
     <div class="mb-4 grid grid-cols-1 md:grid-cols-6 gap-4">

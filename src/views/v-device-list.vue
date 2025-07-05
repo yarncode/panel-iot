@@ -2,18 +2,46 @@
   <div class="device-list-container p-6">
     <h1 class="text-2xl font-bold mb-4">Danh sách thiết bị</h1>
 
-    <div class="mb-4 flex items-center">
-      <div class="search-box">
-        <el-input v-model="searchQuery" placeholder="Tìm thiết bị..." prefix-icon="Search" clearable
-          @input="handleSearch" />
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <div class="search-box">
+          <el-input v-model="searchQuery" placeholder="Tìm thiết bị..." prefix-icon="Search" clearable
+            @input="handleSearch" />
+        </div>
+        <div class="pagination-selector flex items-center mx-2">
+          <p class="">Số bản ghi</p>
+          <el-select class="ml-2" style="width: 80px;" v-model="pageSize" @change="handleSizeChange">
+            <el-option :value="5" label="5" />
+            <el-option :value="10" label="10" />
+            <el-option :value="20" label="20" />
+          </el-select>
+        </div>
       </div>
-      <div class="pagination-selector flex items-center mx-2">
-        <p class="">Số bản ghi</p>
-        <el-select class="ml-2" style="width: 80px;" v-model="pageSize" @change="handleSizeChange">
-          <el-option :value="5" label="5" />
-          <el-option :value="10" label="10" />
-          <el-option :value="20" label="20" />
-        </el-select>
+      <div class="flex items-center gap-2">
+        <el-popover placement="bottom-end" trigger="click">
+          <template #reference>
+            <el-button type="primary">
+              <template #icon>
+                <i class="fi fi-rr-add"></i>
+              </template>
+              Thêm thiết bị
+            </el-button>
+          </template>
+          <div class="flex flex-col items-center">
+            <el-button class="w-full" type="primary" @click="showAddDeviceModal = true">
+              <template #icon>
+                <i class="fi fi-rr-wifi"></i>
+              </template>
+              Bluetooth
+            </el-button>
+            <el-button class="w-full !mx-0 mt-2" type="primary">
+              <template #icon>
+                <i class="fi fi-rr-usb-pendrive"></i>
+              </template>
+              Serial
+            </el-button>
+          </div>
+        </el-popover>
       </div>
     </div>
 
@@ -28,7 +56,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="name" label="Tên" width="200">
+      <el-table-column fixed prop="name" label="Tên" width="200">
         <template #default="{ row }">
           <div class="flex items-center gap-2">
             <el-input v-if="editingRow === row" v-model="row.name" size="small" />
@@ -53,8 +81,7 @@
       <el-table-column label="Loại">
         <template #header>
           <div class="flex items-center gap-2 whitespace-nowrap overflow-hidden">
-            Device Type
-            <el-select v-model="deviceTypeFilter" placeholder="Filter" size="small" @change="handleFilterChange">
+            <el-select v-model="deviceTypeFilter" placeholder="Device Type" size="small" @change="handleFilterChange">
               <el-option :value="''" label="All" />
               <el-option v-for="type in deviceTypes" :key="type" :value="type" :label="type" />
             </el-select>
@@ -68,8 +95,7 @@
       <el-table-column label="Trạng thái">
         <template #header>
           <div class="flex items-center gap-2 whitespace-nowrap overflow-hidden">
-            Status
-            <el-select v-model="statusFilter" placeholder="Filter" size="small" @change="handleFilterChange"
+            <el-select v-model="statusFilter" placeholder="Status" size="small" @change="handleFilterChange"
               style="min-width: 120px;">
               <el-option :value="''" label="All" />
               <el-option :value="'online'" label="Online" />
@@ -102,6 +128,33 @@
       <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="filteredDevices.length"
         layout="total, prev, pager, next" @current-change="handleCurrentChange" />
     </div>
+
+    <el-dialog draggable v-model="showAddDeviceModal" title="Thêm thiết bị" max-width="50%">
+      <div class="flex flex-col gap-4">
+        <div class="flex justify-end">
+          <el-button type="primary" @click="scanBluetoothDevices">
+            <template #icon>
+              <i class="fi fi-rr-qr-scan"></i>
+            </template>
+            Quét thiết bị Bluetooth
+          </el-button>
+        </div>
+
+        <div v-if="bluetoothDevices.length > 0">
+          <el-table v-loading="scanDevice" :data="bluetoothDevices" stripe>
+            <el-table-column width="50" prop="stt" label="STT" />
+            <el-table-column prop="name" label="Tên thiết bị" />
+            <el-table-column prop="mac" label="Địa chỉ MAC" />
+          </el-table>
+        </div>
+
+        <el-empty v-loading="scanDevice" v-else description="Không tìm thấy thiết bị nào" />
+      </div>
+
+      <template #footer>
+        <el-button @click="showAddDeviceModal = false">Đóng</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -136,6 +189,7 @@ const devices = ref<Device[]>([
 ]);
 
 const loading = ref(true);
+const scanDevice = ref(false);
 const searchQuery = ref('');
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -143,6 +197,8 @@ const statusFilter = ref('');
 const deviceTypeFilter = ref('');
 const editingRow = ref<Device | null>(null);
 const selectedRows = ref<Device[]>([]);
+const showAddDeviceModal = ref(false);
+const bluetoothDevices = ref<{ stt: number; name: string; mac: string }[]>([]);
 
 onMounted(() => {
   // Simulate API loading
@@ -243,6 +299,19 @@ const handleSelectionChange = (selection: Device[]) => {
 const deviceTypes = computed(() => {
   return Array.from(new Set(devices.value.map(device => device.deviceType)));
 });
+
+const scanBluetoothDevices = () => {
+  console.log('Scanning for Bluetooth devices...');
+  scanDevice.value = true;
+  // Simulate scanning logic
+  setTimeout(() => {
+    bluetoothDevices.value = [
+      { stt: 1, name: 'Device A', mac: '00:1A:7D:DA:71:13' },
+      { stt: 2, name: 'Device B', mac: '00:1A:7D:DA:71:14' },
+    ];
+    scanDevice.value = false;
+  }, 2000);
+};
 </script>
 
 <style scoped></style>

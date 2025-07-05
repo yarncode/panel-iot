@@ -2,7 +2,7 @@
   <section class="p-4">
     <header class="mb-4">
       <h1 class="text-2xl font-bold">Loại thiết bị</h1>
-      <p class="text-sm text-gray-500">Các loại thiết bị sẽ được quản lí ở đây.</p>
+      <!-- <p class="text-sm text-gray-500">Các loại thiết bị sẽ được quản lí ở đây.</p> -->
     </header>
 
     <!-- Add Device Button -->
