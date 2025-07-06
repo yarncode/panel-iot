@@ -1,5 +1,5 @@
 <template>
-  <svg :class="disable ? '' : 'absolute'" :width="disable ? '100%' : size.width" :height="disable ? '100%' : size.height" ref="svg" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+  <v-element :width="props.width" :height="props.height" :disable="props.disable" :size="props.size" :anchor_name="ANCHOR_TYPE" :mark_point="MARK_POINT" :map="props.map">
     <desc>Copyright Opto 22</desc>
     <g>
       <g id="frame">
@@ -100,47 +100,68 @@
         <path fill="#9FE0FC" d="M75.809,52.532c-14.006,0.722-36.714,0.722-50.72,0"></path>
       </g>
     </g>
-  </svg>
+  </v-element>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import type { PropType } from 'vue'
 import * as d3 from 'd3'
+import { v4 } from 'uuid'
 import type { PickerDiagram } from '@/components/scada/interface/i-diagram'
+import type { IAnchorAbstract } from '@/components/scada/interface/i-anchor'
+
+import vElement from '@/components/scada/v-element.vue'
+
+const ANCHOR_TYPE = v4()
+const MARK_POINT = reactive<Array<IAnchorAbstract>>([
+  {
+    x: 0,
+    y: 0,
+  },
+  {
+    x: 50,
+    y: 0,
+  },
+  {
+    x: 100,
+    y: 0,
+  },
+  {
+    x: 0,
+    y: 50,
+  },
+  {
+    x: 50,
+    y: 50,
+  },
+  {
+    x: 100,
+    y: 50,
+  },
+  {
+    x: 0,
+    y: 100,
+  },
+  {
+    x: 50,
+    y: 100,
+  },
+  {
+    x: 100,
+    y: 100,
+  },
+])
 
 const props = defineProps({
   width: { type: Number, default: 400 },
   height: { type: Number, default: 300 },
-  radius: { type: Number, default: 30 },
-  color: { type: String, default: 'steelblue' },
+  size: { type: Number, default: 100 },
   disable: { type: Boolean, default: false },
   map: { type: Array as PropType<readonly PickerDiagram[]>, default: () => [] },
 })
-const svg = ref<SVGSVGElement | null>(null)
-
-const pos = reactive({
-  x: props.width / 2,
-  y: props.height / 2,
-})
-
-const size = reactive({
-  width: 100,
-  height: 100,
-})
-
-const x = ref(pos.x)
-const y = ref(pos.y)
 
 onMounted(() => {
-  if (props.disable) return
-  const drag = d3.drag().on('drag', (event: d3.D3DragEvent<SVGSVGElement, unknown, unknown>) => {
-    pos.x = Math.max(0, Math.min(props.width - size.width, event.x - size.width / 2))
-    pos.y = Math.max(0, Math.min(props.height - size.height, event.y - size.height / 2))
-
-    d3.select(svg.value).transition().duration(50).ease(d3.easeQuadInOut).attr('transform', `translate(${pos.x}, ${pos.y})`)
-  })
-
-  d3.select(svg.value).call(drag as any)
+  /* phase: init something */
 })
 </script>

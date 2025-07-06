@@ -27,6 +27,7 @@ import vShortHorizontalPipe from './v-short-horizontal-pipe.vue'
 import vSoleNoidValve from './v-sole-noid-valve.vue'
 
 import type { PickerDiagram, ScadaElement, ScadaSymbol } from '@/components/scada/interface/i-diagram'
+import { anchorStore } from '@/components/scada/store/anchor'
 
 const picker = reactive<Array<PickerDiagram>>([])
 const elements = reactive<Array<ScadaElement>>([

@@ -666,6 +666,18 @@
     local-pkg "^1.0.0"
     mlly "^1.7.4"
 
+"@imengyu/vue-scroll-rect@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@imengyu/vue-scroll-rect/-/vue-scroll-rect-0.1.4.tgz#116518e48a3a44b1e988f67297c6aef4a160097d"
+  integrity sha512-VIVO9GrS7YXo4hk38dmu+nPm1orJjwhQ50uKCW53tR4ExOUiAnP23Xem3Oj+c6iTYbkGWGmD+4GdOYB20qdQNA==
+
+"@imengyu/vue3-context-menu@^1.5.1":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@imengyu/vue3-context-menu/-/vue3-context-menu-1.5.1.tgz#51bee19592daf46df3427b969ae6b052b84fb79d"
+  integrity sha512-Y3M/PVOj0Fz7lu3aviIu6NKFYjqMP1tZSffSiYy55JdAfcm/bD06dRT9RL5AccOqTSJdvcAImhiYvmBnPKtYEg==
+  dependencies:
+    "@imengyu/vue-scroll-rect" "^0.1.4"
+
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
   resolved "https://registry.yarnpkg.com/@isaacs/cliui/-/cliui-8.0.2.tgz#b37667b7bc181c168782259bab42474fbf52b550"
@@ -5644,6 +5656,11 @@ util-deprecate@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 uuid@^8.3.2:
   version "8.3.2"

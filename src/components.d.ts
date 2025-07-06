@@ -69,6 +69,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     VDiagram: typeof import('./components/scada/v-diagram.vue')['default']
+    VElement: typeof import('./components/scada/v-element.vue')['default']
     VElment: typeof import('./components/scada/v-short-horizontal-pipe.vue')['default']
     VPump: typeof import('./components/scada/v-pump.vue')['default']
     VShortHorizontalPipe: typeof import('./components/scada/v-short-horizontal-pipe.vue')['default']
