@@ -61,6 +61,11 @@ const router = createRouter({
           name: 'scada',
           component: VScada,
         },
+        {
+          path: 'test',
+          name: 'test',
+          component: () => import('@/views/v-test.vue'),
+        },
       ],
     },
     {

@@ -36,6 +36,7 @@
     "gojs": "^3.0.24",
     "jointjs": "^3.7.7",
     "leaflet": "^1.9.4",
+    "nunjucks": "^3.2.4",
     "pinia": "^3.0.1",
     "tailwindcss": "^4.1.7",
     "uuid": "^11.1.0",
@@ -43,7 +44,8 @@
     "vue": "^3.5.13",
     "vue-chart-3": "^3.1.8",
     "vue-draggable-resizable": "^3.0.0",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vuedraggable": "^2.24.3"
   },
   "devDependencies": {
     "@iconify-json/ep": "^1.2.2",

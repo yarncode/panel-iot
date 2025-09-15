@@ -14,9 +14,15 @@
         </el-collapse>
       </el-scrollbar>
     </div>
-    <div ref="view_diagram" class="border border-amber-300 col-span-10 relative">
+    <!-- <div ref="view_diagram" class="border border-amber-300 col-span-10 relative">
       <component v-for="pick in picker" :key="pick.id" :is="pick.component" :map="picker" :height="($.refs.view_diagram as HTMLElement).offsetHeight" :width="($.refs.view_diagram as HTMLElement).offsetWidth" />
-    </div>
+    </div> -->
+    <!-- GRID CONTAINER -->
+    <section ref="viewDiagram" class="border border-amber-300 col-span-10 relative bg-transparent">
+      <v-grid-container class="w-full h-full">
+        <component v-for="pick in picker" :key="pick.id" :is="pick.component" :map="picker" :resize-mode="pick.resizeMode" />
+      </v-grid-container>
+    </section>
   </div>
 </template>
 
@@ -25,8 +31,9 @@ import { useTemplateRef, ref, onMounted, reactive, type Component, shallowRef, m
 import * as d3 from 'd3'
 import vShortHorizontalPipe from './v-short-horizontal-pipe.vue'
 import vSoleNoidValve from './v-sole-noid-valve.vue'
+import vGridContainer from './v-grid-container.vue'
 
-import type { PickerDiagram, ScadaElement, ScadaSymbol } from '@/components/scada/interface/i-diagram'
+import { ResizeMode, type PickerDiagram, type ScadaElement, type ScadaSymbol } from '@/components/scada/interface/i-diagram'
 import { anchorStore } from '@/components/scada/store/anchor'
 
 const picker = reactive<Array<PickerDiagram>>([])
@@ -45,7 +52,8 @@ const elements = reactive<Array<ScadaElement>>([
           en: 'Solenoid Valve',
           vi: 'Van điện từ',
         },
-        component: markRaw(vSoleNoidValve),
+        resizeMode: ResizeMode.GRID,
+        component: vSoleNoidValve,
       },
     ],
   },
@@ -63,7 +71,8 @@ const elements = reactive<Array<ScadaElement>>([
           en: 'Short Pipe Horizontal',
           vi: 'Ống ngắn ngang',
         },
-        component: markRaw(vShortHorizontalPipe),
+        resizeMode: ResizeMode.FREE,
+        component: vShortHorizontalPipe,
       },
     ],
   },
@@ -71,6 +80,8 @@ const elements = reactive<Array<ScadaElement>>([
 const activeElement = ref<Array<string>>(['valve', 'pipe'])
 
 const addItemDiagram = (item: ScadaSymbol) => {
+  console.log('add item', item)
+
   const id = Date.now()
   picker.push(
     markRaw({

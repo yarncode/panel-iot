@@ -34,9 +34,7 @@
       <el-main class="">
         <!-- Router view to render child routes -->
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in" enter-active-class="transition-opacity duration-200"
-            leave-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
-            enter-to-class="opacity-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+          <transition name="fade" mode="out-in" enter-active-class="transition-opacity duration-200" leave-active-class="transition-opacity duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
             <component :is="Component" />
           </transition>
         </router-view>
@@ -46,78 +44,83 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
 // Define the side menu items with title, route, and icon
 const sideMenuItems = ref([
   {
     title: 'Tổng quan hệ thống',
     route: '/',
-    icon: 'fi fi-rr-dashboard'
+    icon: 'fi fi-rr-dashboard',
   },
   {
     title: 'Danh sách thiết bị',
     route: '/device-list',
-    icon: 'fi fi-rr-list'
+    icon: 'fi fi-rr-list',
   },
   {
     title: 'Danh sách loại thiết bị',
     route: '/device-type',
-    icon: 'fi fi-rr-meter'
+    icon: 'fi fi-rr-meter',
   },
   {
     title: 'Hệ thống logger',
     route: '/logger',
-    icon: 'fi fi-rr-chart-histogram'
+    icon: 'fi fi-rr-chart-histogram',
   },
   {
     title: 'Giao diện Scada',
     route: '/scada',
-    icon: 'fi fi-rr-chart-tree'
+    icon: 'fi fi-rr-chart-tree',
   },
   {
     title: 'Giao diện DMA Tree',
     route: '/tree-dma',
-    icon: 'fi fi-rr-chart-tree'
+    icon: 'fi fi-rr-chart-tree',
+  },
+  {
+    title: 'Giao diện Test',
+    route: '/test',
+    icon: 'fi fi-rr-chart-tree',
   },
   {
     title: 'File OTA',
     route: '/ota',
-    icon: 'fi fi-rr-file-code'
-  }
-]);
+    icon: 'fi fi-rr-file-code',
+  },
+])
 
 // Define the user dropdown menu items with title, icon and action
 const userMenuItems = ref([
   {
     title: 'Thông tin cá nhân',
     icon: 'fi fi-rr-user',
-    action: 'profile'
+    action: 'profile',
   },
   {
     title: 'Đăng xuất',
     icon: 'fi fi-rr-exit',
-    action: 'logout'
-  }
-]);
+    action: 'logout',
+  },
+])
 
 // Handle dropdown menu actions
 const handleCommand = (command: string) => {
   switch (command) {
     case 'profile':
-      router.push('/profile');
-      break;
+      router.push('/profile')
+      break
     case 'logout':
       // Add logout logic here
-      router.push('/auth/signin');
-      break;
+      router.push('/auth/signin')
+      break
     default:
-      break;
+      break
   }
-};
+}
 </script>
 
 <style scoped>
