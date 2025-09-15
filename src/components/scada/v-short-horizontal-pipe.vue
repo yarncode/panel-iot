@@ -1,5 +1,5 @@
 <template>
-  <v-element :width="props.width" :height="props.height" :disable="props.disable" :size="props.size" :anchor_name="ANCHOR_TYPE" :mark_point="MARK_POINT" :map="props.map">
+  <v-element :resize-mode="props.resizeMode" :width="props.width" :height="props.height" :disable="props.disable" :size="props.size" :anchor_name="ANCHOR_TYPE" :mark_point="MARK_POINT" :map="props.map">
     <g id="Group_Horizonatal_Short" ref="element_group">
       <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="94.2881" y1="-23.0383" x2="123.9873" y2="-23.0383" gradientTransform="matrix(0 -1 1 0 79.2883 124.2117)">
         <stop offset="0.01" style="stop-color: #646566" />
@@ -13,11 +13,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import type { PropType } from 'vue'
 import * as d3 from 'd3'
 import { v4 } from 'uuid'
-import { type PickerDiagram, ResizeMode } from '@/components/scada/interface/i-diagram'
+import { ResizeMode, type PickerDiagram } from '@/components/scada/interface/i-diagram'
 import type { IAnchorAbstract } from '@/components/scada/interface/i-anchor'
 
 import vElement from '@/components/scada/v-element.vue'
@@ -67,11 +67,9 @@ const props = defineProps({
   height: { type: Number, default: 300 },
   size: { type: Number, default: 100 },
   disable: { type: Boolean, default: false },
-  resizeMode: { type: Object as PropType<ResizeMode>, default: ResizeMode.GRID },
+  resizeMode: { type: String as PropType<ResizeMode>, default: ResizeMode.GRID },
   map: { type: Array as PropType<readonly PickerDiagram[]>, default: () => [] },
 })
-
-console.log('props.resizeMode:', props.resizeMode)
 
 onMounted(() => {
   /* phase: init something */

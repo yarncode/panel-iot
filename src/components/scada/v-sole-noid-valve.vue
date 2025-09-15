@@ -108,7 +108,7 @@ import { ref, onMounted, reactive } from 'vue'
 import type { PropType } from 'vue'
 import * as d3 from 'd3'
 import { v4 } from 'uuid'
-import { type PickerDiagram, ResizeMode } from '@/components/scada/interface/i-diagram'
+import { ResizeMode, type PickerDiagram } from '@/components/scada/interface/i-diagram'
 import type { IAnchorAbstract } from '@/components/scada/interface/i-anchor'
 
 import vElement from '@/components/scada/v-element.vue'
@@ -158,11 +158,9 @@ const props = defineProps({
   height: { type: Number, default: 300 },
   size: { type: Number, default: 100 },
   disable: { type: Boolean, default: false },
-  resizeMode: { type: Object as PropType<ResizeMode>, default: ResizeMode.GRID },
+  resizeMode: { type: String as PropType<ResizeMode>, default: ResizeMode.GRID },
   map: { type: Array as PropType<readonly PickerDiagram[]>, default: () => [] },
 })
-
-console.log('props.resizeMode:', props.resizeMode)
 
 onMounted(() => {
   /* phase: init something */

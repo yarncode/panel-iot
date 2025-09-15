@@ -7,14 +7,14 @@
           <i class="fi fi-rr-info"></i>
         </button>
       </el-tooltip>
-      <el-button type="text" size="small" @click="zoomOut" :disabled="scale <= minScale">
+      <el-button size="small" @click="zoomOut" :disabled="scale <= minScale">
         <i class="fi fi-rr-zoom-out"></i>
       </el-button>
       <span class="text-xs select-none text-gray-500 text-center">{{ Math.round(scale * 100) }}%</span>
-      <el-button type="text" size="small" @click="zoomIn" :disabled="scale >= maxScale">
+      <el-button size="small" @click="zoomIn" :disabled="scale >= maxScale">
         <i class="fi fi-rr-zoom-in"></i>
       </el-button>
-      <el-button type="text" size="small" @click="resetView">
+      <el-button size="small" @click="resetView">
         <i class="fi fi-rr-undo"></i>
       </el-button>
     </header>
@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onBeforeUnmount, computed, provide, toRef } from 'vue'
 import { GRID_CONTEXT_KEY } from '@/components/scada/context/grid-context'
+import { createSnapRegistry, SNAP_REGISTRY_KEY } from '@/components/scada/context/snap-registry'
 
 const props = withDefaults(
   defineProps<{
@@ -243,4 +244,8 @@ provide(GRID_CONTEXT_KEY, {
   containerEl: containerRef,
   clientToWorld,
 })
+
+// Provide snap registry so children can register their rects
+const snapRegistry = createSnapRegistry()
+provide(SNAP_REGISTRY_KEY, snapRegistry)
 </script>

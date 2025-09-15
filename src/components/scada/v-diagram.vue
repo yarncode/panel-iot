@@ -1,25 +1,60 @@
 <template>
-  <div :style="{ height: '720px' }" class="grid grid-cols-12 gap-4 w-full">
-    <div class="col-span-2 border border-amber-300">
-      <p>Chọn đối tượng</p>
-      <el-scrollbar>
-        <el-collapse v-model="activeElement">
-          <el-collapse-item :style="{ '--el-collapse-header-height': '30px' }" v-for="el in elements" :key="el.name" :title="`${el.lang.vi} (${el.ls.length})`" :name="el.name">
-            <div class="grid grid-cols-12">
-              <div v-for="item in el.ls" :key="item.name" class="col-span-3 w-16 h-16" @click="addItemDiagram(item)">
-                <component :key="item.name" :is="item.component" :disable="true" />
-              </div>
-            </div>
-          </el-collapse-item>
-        </el-collapse>
+  <div :style="{ height: '720px' }" class="grid grid-cols-12 gap-4 w-full bg-transparent">
+    <aside class="col-span-12 md:col-span-3 lg:col-span-2 border border-amber-300 bg-transparent flex flex-col">
+      <header class="px-3 py-2 text-sm font-semibold flex items-center justify-between gap-2 bg-transparent border-b border-amber-300/50">
+        <div class="flex items-center gap-2 bg-transparent">
+          <i class="fi fi-rr-apps"></i>
+          <span>Chọn đối tượng</span>
+        </div>
+      </header>
+
+      <div class="p-2 bg-transparent">
+        <el-input v-model="searchTerm" size="small" clearable placeholder="Tìm kiếm đối tượng..." class="bg-transparent w-full">
+          <template #prefix>
+            <i class="fi fi-rr-search"></i>
+          </template>
+        </el-input>
+      </div>
+
+      <el-scrollbar class="bg-transparent flex-1">
+        <el-tabs v-model="activeTab" class="bg-transparent" stretch>
+          <el-tab-pane label="Tất cả" name="all" class="bg-transparent">
+            <section class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2 p-2 bg-transparent">
+              <template v-if="allItems.length">
+                <el-tooltip v-for="item in allItems" :key="`all-` + item.name" :content="item.lang.vi" placement="top" effect="light" class="bg-transparent">
+                  <button class="h-16 overflow-hidden flex items-center justify-center rounded hover:ring-2 hover:ring-emerald-400/60 transition bg-transparent" @click="addItemDiagram(item)">
+                    <component :is="item.component" :disable="true" />
+                  </button>
+                </el-tooltip>
+              </template>
+              <template v-else>
+                <el-empty description="Không có kết quả" class="bg-transparent" />
+              </template>
+            </section>
+          </el-tab-pane>
+
+          <el-tab-pane v-for="group in filteredGroups" :key="group.name" :label="`${group.lang.vi} (${group.ls.length})`" :name="group.name" class="bg-transparent">
+            <section class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-2 p-2 bg-transparent">
+              <template v-if="group.ls.length">
+                <el-tooltip v-for="item in group.ls" :key="item.name" :content="item.lang.vi" placement="top" effect="light" class="bg-transparent">
+                  <button type="button" class="w-16 h-16 flex items-center justify-center rounded hover:ring-2 hover:ring-emerald-400/60 transition bg-transparent" @click="addItemDiagram(item)">
+                    <component :is="item.component" :disable="true" />
+                  </button>
+                </el-tooltip>
+              </template>
+              <template v-else>
+                <el-empty description="Không có đối tượng" class="bg-transparent" />
+              </template>
+            </section>
+          </el-tab-pane>
+        </el-tabs>
       </el-scrollbar>
-    </div>
-    <!-- <div ref="view_diagram" class="border border-amber-300 col-span-10 relative">
-      <component v-for="pick in picker" :key="pick.id" :is="pick.component" :map="picker" :height="($.refs.view_diagram as HTMLElement).offsetHeight" :width="($.refs.view_diagram as HTMLElement).offsetWidth" />
-    </div> -->
-    <!-- GRID CONTAINER -->
-    <section ref="viewDiagram" class="border border-amber-300 col-span-10 relative bg-transparent">
-      <v-grid-container class="w-full h-full">
+    </aside>
+
+    <!-- Work area -->
+    <section ref="viewDiagram" class="border border-amber-300 col-span-12 md:col-span-9 lg:col-span-10 relative bg-transparent">
+      <!-- Grid container -->
+      <v-grid-container class="w-full h-full bg-transparent">
         <component v-for="pick in picker" :key="pick.id" :is="pick.component" :map="picker" :resize-mode="pick.resizeMode" />
       </v-grid-container>
     </section>
@@ -27,14 +62,15 @@
 </template>
 
 <script setup lang="ts">
-import { useTemplateRef, ref, onMounted, reactive, type Component, shallowRef, markRaw } from 'vue'
-import * as d3 from 'd3'
+import { ref, reactive, markRaw, computed } from 'vue'
 import vShortHorizontalPipe from './v-short-horizontal-pipe.vue'
 import vSoleNoidValve from './v-sole-noid-valve.vue'
 import vGridContainer from './v-grid-container.vue'
 
 import { ResizeMode, type PickerDiagram, type ScadaElement, type ScadaSymbol } from '@/components/scada/interface/i-diagram'
-import { anchorStore } from '@/components/scada/store/anchor'
+
+const vSoleNoidValveEl = markRaw(vSoleNoidValve)
+const vShortHorizontalPipeEl = markRaw(vShortHorizontalPipe)
 
 const picker = reactive<Array<PickerDiagram>>([])
 const elements = reactive<Array<ScadaElement>>([
@@ -53,7 +89,7 @@ const elements = reactive<Array<ScadaElement>>([
           vi: 'Van điện từ',
         },
         resizeMode: ResizeMode.GRID,
-        component: vSoleNoidValve,
+        component: vSoleNoidValveEl,
       },
     ],
   },
@@ -72,17 +108,31 @@ const elements = reactive<Array<ScadaElement>>([
           vi: 'Ống ngắn ngang',
         },
         resizeMode: ResizeMode.FREE,
-        component: vShortHorizontalPipe,
+        component: vShortHorizontalPipeEl,
       },
     ],
   },
 ])
-const activeElement = ref<Array<string>>(['valve', 'pipe'])
+
+// Side menu state
+const searchTerm = ref('')
+const activeTab = ref('all')
+
+const filteredGroups = computed(() => {
+  const term = searchTerm.value.trim().toLowerCase()
+  if (!term) return elements
+  return elements
+    .map((g) => ({
+      ...g,
+      ls: g.ls.filter((i) => i.name.toLowerCase().includes(term) || i.lang.vi.toLowerCase().includes(term) || i.lang.en.toLowerCase().includes(term)),
+    }))
+    .filter((g) => g.ls.length > 0)
+})
+
+const allItems = computed(() => filteredGroups.value.flatMap((g) => g.ls))
 
 const addItemDiagram = (item: ScadaSymbol) => {
-  console.log('add item', item)
-
-  const id = Date.now()
+  const id = Date.now() + Math.random()
   picker.push(
     markRaw({
       ...item,
@@ -91,5 +141,3 @@ const addItemDiagram = (item: ScadaSymbol) => {
   )
 }
 </script>
-
-<style scoped></style>

@@ -52,6 +52,8 @@ declare module 'vue' {
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    ElTabPane: typeof import('element-plus/es')['ElTabPane']
+    ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ElUpload: typeof import('element-plus/es')['ElUpload']
@@ -80,6 +82,7 @@ declare module 'vue' {
     VPump: typeof import('./components/scada/v-pump.vue')['default']
     VShortHorizontalPipe: typeof import('./components/scada/v-short-horizontal-pipe.vue')['default']
     VSoleNoidValve: typeof import('./components/scada/v-sole-noid-valve.vue')['default']
+    VSymbolThumb: typeof import('./components/scada/v-symbol-thumb.vue')['default']
     VWaterTank: typeof import('./components/scada/v-water-tank.vue')['default']
   }
   export interface ComponentCustomProperties {

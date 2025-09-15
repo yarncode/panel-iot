@@ -17,17 +17,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, h, inject, computed, watch } from 'vue'
+import { ref, onMounted, reactive, h, inject, computed, watch, onBeforeUnmount } from 'vue'
 import type { PropType } from 'vue'
 import * as d3 from 'd3'
 import { onClickOutside } from '@vueuse/core'
 
-import { type PickerDiagram, ResizeMode } from '@/components/scada/interface/i-diagram'
+import { ResizeMode, type PickerDiagram } from '@/components/scada/interface/i-diagram'
 import type { IAnchorAbstract, IAnchorCoordinate, IAnchorSizeElement } from '@/components/scada/interface/i-anchor'
 
-import vMenu from '@imengyu/vue3-context-menu'
+import vMenu, { type MenuItem } from '@imengyu/vue3-context-menu'
 
 import { GRID_CONTEXT_KEY } from '@/components/scada/context/grid-context'
+import { SNAP_REGISTRY_KEY, type SnapRegistry, type SnapTargetRect } from '@/components/scada/context/snap-registry'
+
+type SnapMode = 'grid' | 'elements' | 'both' | 'none'
 
 const props = defineProps({
   width: { type: Number, default: 400 },
@@ -37,12 +40,16 @@ const props = defineProps({
   anchor_name: { type: String, required: true },
   anchor_snap: { type: Number, default: 10 },
   space_box_resize: { type: Number, default: 10 },
-  resizeMode: { type: Object as PropType<ResizeMode>, default: ResizeMode.GRID },
+  resizeMode: { type: String as PropType<ResizeMode>, default: 'grid' },
   mark_point: {
     type: Array as PropType<readonly IAnchorAbstract[]>,
     required: true,
   },
   map: { type: Array as PropType<readonly PickerDiagram[]>, default: () => [] },
+  // snapping
+  snapMode: { type: String as PropType<SnapMode>, default: 'grid' },
+  snapTolerance: { type: Number, default: 8 },
+  snapTargets: { type: Array as PropType<readonly SnapTargetRect[]>, default: () => [] },
 })
 const svg = ref<SVGSVGElement | null>(null)
 const contentG = ref<SVGGElement | null>(null)
@@ -67,7 +74,19 @@ const pos = reactive<IAnchorCoordinate>({
 })
 
 const gridCtx = inject(GRID_CONTEXT_KEY, null)
+const snapRegistry = inject<SnapRegistry | null>(SNAP_REGISTRY_KEY, null)
 let dragOffset = { dx: 0, dy: 0 }
+
+// per-element snap state
+const elSnapMode = ref<SnapMode>(props.snapMode)
+const elSnapTolerance = ref<number>(props.snapTolerance)
+watch(
+  () => [props.snapMode, props.snapTolerance],
+  ([m, t]) => {
+    elSnapMode.value = (m as SnapMode) ?? elSnapMode.value
+    elSnapTolerance.value = typeof t === 'number' ? t : elSnapTolerance.value
+  },
+)
 
 const handleSize = 8
 
@@ -111,31 +130,72 @@ const onSvgBlur = (event: PointerEvent) => {
   resizing.value = false
 }
 
-console.log(props.resizeMode)
-
 const closeMenu = () => {}
 
 const openMenu = (event: MouseEvent) => {
+  const setMode = (m: SnapMode) => () => (elSnapMode.value = m)
+  const isMode = (m: SnapMode) => elSnapMode.value === m
+  const decTol = () => (elSnapTolerance.value = Math.max(2, elSnapTolerance.value - 2))
+  const incTol = () => (elSnapTolerance.value = Math.min(64, elSnapTolerance.value + 2))
+
+  const menus = reactive([
+    {
+      icon: h('i', { class: 'fi fi-rr-location-crosshairs leading-none mt-[3px]' }),
+      label: 'xem định vị đối tượng',
+      onClick: (e?: MouseEvent | KeyboardEvent | undefined) => {
+        showCoordinateSymbol.value = true
+      },
+    },
+    {
+      icon: h('i', { class: 'fi fi-rr-expand leading-none mt-[3px]' }),
+      label: 'chỉnh kích thước',
+      onClick: () => {
+        resizing.value = true
+      },
+      divided: true,
+    },
+    { label: 'Chế độ snap', disabled: true },
+    {
+      icon: h('i', { class: isMode('grid') ? 'fi fi-rr-check' : 'fi fi-rr-empty' }),
+      label: 'Grid',
+      onClick: setMode('grid'),
+    },
+    {
+      icon: h('i', { class: isMode('elements') ? 'fi fi-rr-check' : 'fi fi-rr-empty' }),
+      label: 'Elements',
+      onClick: setMode('elements'),
+    },
+    {
+      icon: h('i', { class: isMode('both') ? 'fi fi-rr-check' : 'fi fi-rr-empty' }),
+      label: 'Both',
+      onClick: setMode('both'),
+    },
+    {
+      icon: h('i', { class: isMode('none') ? 'fi fi-rr-check' : 'fi fi-rr-empty' }),
+      label: 'None',
+      onClick: setMode('none'),
+      divided: true,
+    },
+    { label: `Tolerance: ${elSnapTolerance.value}` },
+    {
+      icon: h('i', { class: 'fi fi-rr-angle-small-left' }),
+      label: 'Giảm tolerance',
+      clickClose: false,
+      onClick: decTol,
+    },
+    {
+      icon: h('i', { class: 'fi fi-rr-angle-small-right' }),
+      label: 'Tăng tolerance',
+      clickClose: false,
+      onClick: incTol,
+    },
+  ]) as MenuItem[]
+
   vMenu.showContextMenu({
     x: event.x,
     y: event.y,
     theme: 'mac dark',
-    items: [
-      {
-        icon: h('i', { class: 'fi fi-rr-location-crosshairs leading-none mt-[3px]' }),
-        label: 'xem định vị đối tượng',
-        onClick: (e?: MouseEvent | KeyboardEvent | undefined) => {
-          showCoordinateSymbol.value = true
-        },
-      },
-      {
-        icon: h('i', { class: 'fi fi-rr-expand leading-none mt-[3px]' }),
-        label: 'chỉnh kích thước',
-        onClick: () => {
-          resizing.value = true
-        },
-      },
-    ],
+    items: menus,
   })
 }
 
@@ -154,6 +214,157 @@ watch(
     updateSvgSizeStyle()
   },
 )
+
+// --- Element snap helpers ---
+const currentRect = (): SnapTargetRect => ({
+  id: props.anchor_name,
+  x: pos.x,
+  y: pos.y,
+  width: size.width,
+  height: size.height,
+})
+
+const activeTargets = computed<SnapTargetRect[]>(() => {
+  const list = snapRegistry?.list.value ?? (props.snapTargets as SnapTargetRect[])
+  return list.filter((t) => t.id !== props.anchor_name)
+})
+
+const activeTolerance = computed(() => {
+  if (gridCtx) return Math.max(2, elSnapTolerance.value)
+  return Math.max(2, elSnapTolerance.value)
+})
+
+function snapMoveToElements(nx: number, ny: number) {
+  if (elSnapMode.value === 'grid' || elSnapMode.value === 'none') return { x: nx, y: ny }
+  const tol = activeTolerance.value
+
+  const L = nx
+  const R = nx + size.width
+  const CX = nx + size.width / 2
+  const T = ny
+  const B = ny + size.height
+  const CY = ny + size.height / 2
+
+  let bestDx = 0
+  let bestDy = 0
+  let bestDistX = tol + 1
+  let bestDistY = tol + 1
+
+  for (const t of activeTargets.value) {
+    const tL = t.x
+    const tR = t.x + t.width
+    const tCX = t.x + t.width / 2
+    const tT = t.y
+    const tB = t.y + t.height
+    const tCY = t.y + t.height / 2
+
+    const vx = [tL - L, tL - R, tL - CX, tR - L, tR - R, tR - CX, tCX - L, tCX - R, tCX - CX]
+    for (const dx of vx) {
+      const adx = Math.abs(dx)
+      if (adx < bestDistX && adx <= tol) {
+        bestDistX = adx
+        bestDx = dx
+      }
+    }
+
+    const vy = [tT - T, tT - B, tT - CY, tB - T, tB - B, tB - CY, tCY - T, tCY - B, tCY - CY]
+    for (const dy of vy) {
+      const ady = Math.abs(dy)
+      if (ady < bestDistY && ady <= tol) {
+        bestDistY = ady
+        bestDy = dy
+      }
+    }
+  }
+
+  return { x: nx + bestDx, y: ny + bestDy }
+}
+
+function snapResizeToElements(dir: ResizeDir, nx: number, ny: number, nw: number, nh: number) {
+  if (elSnapMode.value === 'grid' || elSnapMode.value === 'none') return { x: nx, y: ny, w: nw, h: nh }
+  const tol = activeTolerance.value
+
+  let L = nx
+  let R = nx + nw
+  let T = ny
+  let B = ny + nh
+
+  let bestDx = 0
+  let bestDy = 0
+  let bestDistX = tol + 1
+  let bestDistY = tol + 1
+
+  const movingX = dir.includes('e') || dir.includes('w')
+  const movingY = dir.includes('n') || dir.includes('s')
+
+  for (const t of activeTargets.value) {
+    const tL = t.x
+    const tR = t.x + t.width
+    const tCX = t.x + t.width / 2
+    const tT = t.y
+    const tB = t.y + t.height
+    const tCY = t.y + t.height / 2
+
+    if (movingX) {
+      const candidatesX: number[] = []
+      if (dir.includes('e')) {
+        candidatesX.push(tL - R, tR - R, tCX - R)
+      }
+      if (dir.includes('w')) {
+        candidatesX.push(tL - L, tR - L, tCX - L)
+      }
+      for (const dx of candidatesX) {
+        const ad = Math.abs(dx)
+        if (ad < bestDistX && ad <= tol) {
+          bestDistX = ad
+          bestDx = dx
+        }
+      }
+    }
+
+    if (movingY) {
+      const candidatesY: number[] = []
+      if (dir.includes('s')) {
+        candidatesY.push(tT - B, tB - B, tCY - B)
+      }
+      if (dir.includes('n')) {
+        candidatesY.push(tT - T, tB - T, tCY - T)
+      }
+      for (const dy of candidatesY) {
+        const ad = Math.abs(dy)
+        if (ad < bestDistY && ad <= tol) {
+          bestDistY = ad
+          bestDy = dy
+        }
+      }
+    }
+  }
+
+  if (movingX && bestDistX <= tol) {
+    if (dir.includes('e')) {
+      R += bestDx
+      nw = Math.max(10, R - L)
+    }
+    if (dir.includes('w')) {
+      L += bestDx
+      nw = Math.max(10, R - L)
+      nx = L
+    }
+  }
+  if (movingY && bestDistY <= tol) {
+    if (dir.includes('s')) {
+      B += bestDy
+      nh = Math.max(10, B - T)
+    }
+    if (dir.includes('n')) {
+      T += bestDy
+      nh = Math.max(10, B - T)
+      ny = T
+    }
+  }
+
+  return { x: nx, y: ny, w: nw, h: nh }
+}
 
 onMounted(() => {
   /* phase: query real pos elment */
@@ -178,6 +389,9 @@ onMounted(() => {
   d3.select(svg.value)
     .style('width', props.disable ? '100%' : `${size.width}px`)
     .style('height', props.disable ? '100%' : `${size.height}px`)
+
+  // register for snapping
+  if (snapRegistry) snapRegistry.register(currentRect())
 
   if (props.disable) return
 
@@ -207,9 +421,18 @@ onMounted(() => {
         let nx = p.x - dragOffset.dx
         let ny = p.y - dragOffset.dy
 
-        // snap to nearest grid cell
-        nx = Math.round(nx / gs) * gs
-        ny = Math.round(ny / gs) * gs
+        // grid snap if enabled
+        if (elSnapMode.value === 'grid' || elSnapMode.value === 'both') {
+          nx = Math.round(nx / gs) * gs
+          ny = Math.round(ny / gs) * gs
+        }
+
+        // element snap
+        if (elSnapMode.value === 'elements' || elSnapMode.value === 'both') {
+          const s = snapMoveToElements(nx, ny)
+          nx = s.x
+          ny = s.y
+        }
 
         // clamp to visible bounds
         nx = Math.max(wb.minX, Math.min(wb.maxX - size.width, nx))
@@ -219,14 +442,34 @@ onMounted(() => {
         pos.y = ny
       } else {
         // fallback legacy logic
-        pos.x = Math.max(0, Math.min(props.width - size.width, event.x - size.width / 2))
-        pos.y = Math.max(0, Math.min(props.height - size.height, event.y - size.height / 2))
+        let nx = Math.max(0, Math.min(props.width - size.width, event.x - size.width / 2))
+        let ny = Math.max(0, Math.min(props.height - size.height, event.y - size.height / 2))
+
+        if (elSnapMode.value === 'elements' || elSnapMode.value === 'both') {
+          const s = snapMoveToElements(nx, ny)
+          nx = s.x
+          ny = s.y
+        }
+
+        pos.x = nx
+        pos.y = ny
       }
 
       d3.select(svg.value).transition().duration(10).ease(d3.easeQuadInOut).attr('transform', `translate(${pos.x}, ${pos.y})`)
     })
 
   d3.select(svg.value).call(drag as any)
+})
+
+watch(
+  () => [pos.x, pos.y, size.width, size.height],
+  () => {
+    if (snapRegistry) snapRegistry.update(currentRect())
+  },
+)
+
+onBeforeUnmount(() => {
+  if (snapRegistry) snapRegistry.unregister(props.anchor_name)
 })
 
 function getPointer(e: MouseEvent | PointerEvent) {
@@ -264,6 +507,7 @@ function beginHandleDrag(dir: ResizeDir, e: PointerEvent) {
     window.removeEventListener('pointermove', onMove)
     window.removeEventListener('pointerup', onUp)
     resizeSession = null
+    resizing.value = false
   }
 
   window.addEventListener('pointermove', onMove)
@@ -323,12 +567,22 @@ function applyResize(dir: ResizeDir, dx: number, dy: number) {
 
   // mode-specific adjustments
   if (props.resizeMode === ResizeMode.FREE) {
-    // no snapping
+    // no grid snapping
     nw = Math.max(minSize, nw)
     nh = Math.max(minSize, nh)
+
+    // optional element snap
+    if (elSnapMode.value === 'elements' || elSnapMode.value === 'both') {
+      const r = snapResizeToElements(dir, nx, ny, nw, nh)
+      nx = r.x
+      ny = r.y
+      nw = Math.max(minSize, r.w)
+      nh = Math.max(minSize, r.h)
+    }
+
     clampToBounds()
   } else if (props.resizeMode === ResizeMode.ASPECT) {
-    // maintain 1:1 aspect with snapping
+    // maintain 1:1 aspect with grid snapping
     const gs = gridCtx?.gridSize.value ?? props.anchor_snap
 
     // First, ensure positive sizes respecting min
@@ -345,20 +599,9 @@ function applyResize(dir: ResizeDir, dx: number, dy: number) {
     const right = nx + nw
     const bottom = ny + nh
 
-    // Adjust position to keep the opposite edge/corner anchored
-    if (dir.includes('w')) {
-      // keep right edge fixed
-      nx = right - side
-    }
-    if (dir.includes('n')) {
-      // keep bottom edge fixed
-      ny = bottom - side
-    }
+    if (dir.includes('w')) nx = right - side
+    if (dir.includes('n')) ny = bottom - side
 
-    // If dragging only E or W, keep top aligned; only N or S, keep left aligned
-    // (handled by not changing ny/nx respectively when not included)
-
-    // Assign square
     nw = side
     nh = side
 
@@ -369,16 +612,13 @@ function applyResize(dir: ResizeDir, dx: number, dy: number) {
     // Clamp while preserving square
     if (gridCtx) {
       const wb = gridCtx.worldBounds.value
-      // shift inside bounds without breaking square
       nx = Math.min(Math.max(wb.minX, nx), wb.maxX - nw)
       ny = Math.min(Math.max(wb.minY, ny), wb.maxY - nh)
-      // ensure still fits; if not, reduce square size to fit
       const maxSide = Math.max(minSize, Math.min(wb.maxX - nx, wb.maxY - ny))
       if (nw > maxSide || nh > maxSide) {
         const newSide = Math.floor(maxSide / gs) * gs
         nw = Math.max(minSize, newSide)
         nh = nw
-        // adjust again to keep inside
         nx = Math.min(Math.max(wb.minX, nx), wb.maxX - nw)
         ny = Math.min(Math.max(wb.minY, ny), wb.maxY - nh)
       }
@@ -398,13 +638,19 @@ function applyResize(dir: ResizeDir, dx: number, dy: number) {
     // GRID (default): snap position/size to grid on the axes being changed
     const gs = gridCtx?.gridSize.value ?? props.anchor_snap
 
-    // snap pos: always round, safe if unchanged
     nx = Math.round(nx / gs) * gs
     ny = Math.round(ny / gs) * gs
-
-    // snap size with minimum
     nw = Math.max(minSize, Math.round(nw / gs) * gs)
     nh = Math.max(minSize, Math.round(nh / gs) * gs)
+
+    // optional element snap after grid
+    if (elSnapMode.value === 'elements' || elSnapMode.value === 'both') {
+      const r = snapResizeToElements(dir, nx, ny, nw, nh)
+      nx = r.x
+      ny = r.y
+      nw = Math.max(minSize, r.w)
+      nh = Math.max(minSize, r.h)
+    }
 
     clampToBounds()
   }
